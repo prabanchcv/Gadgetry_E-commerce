@@ -1,8 +1,11 @@
 const moment = require('moment');
 const Sale = require('../Models/orderModel')
 const Order = require('../Models/orderModel')
-const puppeteer = require('puppeteer')
+// const puppeteer = require('puppeteer')
 const xvfb = require('xvfb');
+
+
+const PDFDocument = require('pdfkit');
 
 
 
@@ -137,55 +140,72 @@ const loadDashboard = async (req, res) => {
       }
   };
 
-
-
-
+//checking merge code
   const downloadSalesReport = async (req, res) => {
-    try {
-      const orderData = req.body.orderData;
-      const { startDate, endDate } = req.query;
+  //   try {
+  //     const orderData = req.body.orderData;
+  //     const { startDate, endDate } = req.query;
 
-      const xvfbOptions = {
-          silent: true,
-      };
+  //     const xvfbOptions = {
+  //         silent: true,
+  //     };
 
-      const browser = await puppeteer.launch({
-          headless: true,
-          executablePath: "/usr/bin/google-chrome-stable",
-          args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      });
+  //     const browser = await puppeteer.launch({
+  //         headless: true,
+  //         executablePath: "/usr/bin/google-chrome-stable",
+  //         args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  //     });
 
-      const xvfbInstance = new xvfb(xvfbOptions);
-      xvfbInstance.startSync();
+  //     const xvfbInstance = new xvfb(xvfbOptions);
+  //     xvfbInstance.startSync();
 
-      const page = await browser.newPage();
+  //     const page = await browser.newPage();
 
-      await page.goto(
-          `https://www.gadgetry.fun/admin/renderSalesReport?orderData=${encodeURIComponent(JSON.stringify(orderData))}
-            &startDate=${startDate}&endDate=${endDate}`,
-          {
-              waitUntil: "networkidle2",
-          }
-      );
+  //     await page.goto(
+  //         `https://www.gadgetry.fun/admin/renderSalesReport?orderData=${encodeURIComponent(JSON.stringify(orderData))}
+  //           &startDate=${startDate}&endDate=${endDate}`,
+  //         {
+  //             waitUntil: "networkidle2",
+  //         }
+  //     );
 
-      const pdfBuffer = await page.pdf({
-          format: "A4",
-          printBackground: true,
-      });
+  //     const pdfBuffer = await page.pdf({
+  //         format: "A4",
+  //         printBackground: true,
+  //     });
 
-      await browser.close();
-      xvfbInstance.stopSync();
+  //     await browser.close();
+  //     xvfbInstance.stopSync();
 
-      res.set({
-          "Content-Type": "application/json",
-          "Content-Disposition": `attachment; filename=SalesReport.pdf`,
-      });
+  //     res.set({
+  //         "Content-Type": "application/json",
+  //         "Content-Disposition": `attachment; filename=SalesReport.pdf`,
+  //     });
 
-      res.send(pdfBuffer);
-  } catch (error) {
-      console.log(error.message);
-  }
+  //     res.send(pdfBuffer);
+  // } catch (error) {
+  //     console.log(error.message);
+  // }
+
+  try {
+    const orderData = req.body.orderData;
+    console.log(orderData);
+    const { startDate, endDate } = req.query;
+
+    const pdfBuffer = await generateSalesReportPDF( startDate, endDate);
+
+    res.set({
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename=GadgetrySalesReport.pdf`,
+    });
+
+    res.send(pdfBuffer);
+} catch (error) {
+    console.log(error.message);
+    res.status(500).send('An error occurred');
+}
   };
+  
   
   const renderSalesReport = async (req, res) => {
     try {
@@ -204,6 +224,66 @@ const loadDashboard = async (req, res) => {
       console.log(error.message);
     }
   };
+
+
+  const generateSalesReportPDF = async ( startDate, endDate) => {
+    const newstartDate = new Date(startDate);
+    const newEndDate = new Date(endDate);
+    const orderData = await Order.find({
+      date: {
+          $gte: newstartDate,
+          $lte: newEndDate,
+      },
+      status: "Delivered",
+  }).sort({ date: "desc" });
+    return new Promise((resolve, reject) => {
+      
+        const doc = new PDFDocument();
+        const pdfBuffer = [];
+
+        doc.on('data', (chunk) => {
+            pdfBuffer.push(chunk);
+        });
+
+        doc.on('end', () => {
+            resolve(Buffer.concat(pdfBuffer));
+        });
+
+        doc.on('error', (error) => {
+            reject(error);
+        });
+
+        // Customize PDF content
+        doc.fontSize(18).text('Sales Report', { align: 'center' }).moveDown();
+        doc.fontSize(14).text(`Start Date: ${startDate}`, { align: 'center' });
+        doc.text(`End Date: ${endDate}`, { align: 'center' }).moveDown();
+
+        // Add order data to the PDF
+        doc.moveDown();
+        doc.fontSize(14).text('Order Details:', { underline: true }).moveDown();
+
+        orderData.forEach(async (order) => {
+            doc.text(`Order ID: ${order.orderId}`);
+          
+            doc.text(`Total: ${order.total}`);
+            doc.text(`Payment Method: ${order.paymentMethod}`);
+            doc.text(`Status: ${order.status}`);
+            doc.moveDown();
+
+            // Add product details
+            order.product.forEach(product => {
+                doc.text(`Product: ${product.name}`);
+                doc.text(`Price: ${product.price}`);
+                doc.text(`Quantity: ${product.quantity}`);
+                doc.moveDown();
+            });
+
+            doc.moveDown();
+        });
+
+        doc.end();
+    });
+};
   
 
 
@@ -212,5 +292,6 @@ module.exports = {
     chartData,
     getSales,
     downloadSalesReport,
-    renderSalesReport
+    renderSalesReport,
+    generateSalesReportPDF
 }

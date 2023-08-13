@@ -19,7 +19,7 @@
                           <form id="loginForm">
                               <span class="ec-login-wrap">
                                   <label>Email Address*</label>
-                                  <input type="email" name="email" placeholder="Enter your email address"  />
+                                  <input type="email" name="email" placeholder="Enter your email address " required  />
                                   <p id="emailError" class="p-1 text-danger"></p>
                                 </span>
                               <span class="ec-login-wrap">
@@ -35,7 +35,7 @@
                               <h3 id="accountBlock" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;" class="text-danger text-decoration"></h3>
                             
                               <span class="ec-login-wrap ec-login-btn">
-                                  <button class="btn btn-primary" type="submit" id="submit">Login</button>
+                                  <button class="btn btn-primary" type="submit" id="submit">submit</button>
                                
                               </span>
                              <br>
@@ -72,7 +72,7 @@
                     window.location.href = '/home'
                 }
             } catch (error) {
-                
+                console.log(error);
 
                 if (error.response.status == 400) {
                     const errors = error.response.data.error;

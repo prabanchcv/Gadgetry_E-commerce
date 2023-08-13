@@ -6,7 +6,7 @@ const Coupon = require("../Models/couponModel");
 const Order = require("../Models/orderModel");
 const moment = require("moment");
 const path = require('path')
-const puppeteer = require('puppeteer')
+// const puppeteer = require('puppeteer')
 const xvfb = require('xvfb');
 const Razorpay = require("razorpay");
 
@@ -420,46 +420,46 @@ const updateOrder = async (req, res) => {
 
 
 const downloadInvoice = async (req, res) => {
-    try {
-        const orderId = req.query.orderId;
-        const orderData = await Order.findById(orderId);
+    // try {
+    //     const orderId = req.query.orderId;
+    //     const orderData = await Order.findById(orderId);
 
-        const xvfbOptions = {
-            silent: true,
-        };
+    //     const xvfbOptions = {
+    //         silent: true,
+    //     };
 
-        const browser = await puppeteer.launch({
-            headless: true,
-            executablePath: "/usr/bin/google-chrome-stable",
-            args: ["--no-sandbox", "--disable-setuid-sandbox"],
-        });
+    //     const browser = await puppeteer.launch({
+    //         headless: true,
+    //         executablePath: "/usr/bin/google-chrome-stable",
+    //         args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    //     });
 
-        const xvfbInstance = new xvfb(xvfbOptions);
-        xvfbInstance.startSync();
+    //     const xvfbInstance = new xvfb(xvfbOptions);
+    //     xvfbInstance.startSync();
 
-        const page = await browser.newPage();
+    //     const page = await browser.newPage();
 
-        await page.goto(`https://www.gadgetry/invoice?orderId=${orderId}`, {
-            waitUntil: "networkidle2",
-        });
+    //     await page.goto(`https://www.gadgetry/invoice?orderId=${orderId}`, {
+    //         waitUntil: "networkidle2",
+    //     });
 
-        const pdfBuffer = await page.pdf({
-            format: "A4",
-            printBackground: true,
-        });
+    //     const pdfBuffer = await page.pdf({
+    //         format: "A4",
+    //         printBackground: true,
+    //     });
 
-        await browser.close();
-        xvfbInstance.stopSync();
+    //     await browser.close();
+    //     xvfbInstance.stopSync();
 
-        res.set({
-            "Content-Type": "application/pdf",
-            "Content-Disposition": `attachment; filename=${orderData.orderId}Invoice.pdf`,
-        });
+    //     res.set({
+    //         "Content-Type": "application/pdf",
+    //         "Content-Disposition": `attachment; filename=${orderData.orderId}Invoice.pdf`,
+    //     });
 
-        res.send(pdfBuffer);
-    } catch (error) {
-        console.log(error.message);
-    }
+    //     res.send(pdfBuffer);
+    // } catch (error) {
+    //     console.log(error.message);
+    // }
 };
 
 
