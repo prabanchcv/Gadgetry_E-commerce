@@ -276,10 +276,13 @@ var profilename
             console.log(userData);
           profilename=userData.firstName
           console.log(`...............${profilename}`)
-            if (!userData) {
+
+          if (!valid.isValid) {
+            return res.status(400).json({ error: valid.errors });
+          }
+           else if (!userData) {
               return res.status(401).json({ error: "Invalid Email address" });
-            } else if (!valid.isValid) {
-              return res.status(400).json({ error: valid.errors });
+             
             } else if (userData.is_blocked === true) {
               return res.status(402).json({ error: "Your Account is blocked" });
             } else {

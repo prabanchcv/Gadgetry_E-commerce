@@ -323,17 +323,59 @@ const offerProducts = async (req, res) => {
         const totalPages = Math.ceil(totalCount / productsPerPage);
 
         const userData = req.session.user;
+        
+        var val;
+        let subTotal = 0;
+        if(userData){
+            const userId=userData._id;
+            const user = await User.findOne({ _id: userId }).populate("cart.product").lean();
 
-        res.render("offerProducts", {
-            productData,
-            categoryData,
-            userData,
-            subCategoryData,
-            brandData,
-            currentPage: page,
-            totalPages,
-            offerHeading:`${offerlabel} offer`
-        });
+
+
+            const cart = user.cart;
+           
+          
+    
+            cart.forEach((val) => {
+                val.total = val.product.price * val.quantity;
+                subTotal += val.total;
+            });
+            val=true
+            walletBalance=userData.wallet.balance
+
+            res.render("offerProducts", {
+                cart,
+                subTotal,
+                walletBalance,
+                loggedIn:true,
+                productData,
+                categoryData,
+                userData,
+                subCategoryData,
+                brandData,
+                currentPage: page,
+                totalPages,
+                offerHeading:`${offerlabel} offer`
+            });
+        }else{
+            res.render("offerProducts", {
+                cart:{},
+                subTotal,
+                walletBalance,
+                loggedIn:false,
+                productData,
+                categoryData,
+                userData,
+                subCategoryData,
+                brandData,
+                currentPage: page,
+                totalPages,
+                offerHeading:`${offerlabel} offer`
+            });
+
+        }
+        
+      
     } catch (error) {
         console.log(error.message);
         const userData = req.session.user;
